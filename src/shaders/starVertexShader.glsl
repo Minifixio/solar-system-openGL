@@ -5,5 +5,5 @@ uniform mat4 viewMat, projMat;
 
 void main()
 {
-    gl_Position = projMat * viewMat  * vec4(vPosition, 1.0);
+    gl_Position = projMat * viewMat * vec4(vPosition, 1.0);
 }

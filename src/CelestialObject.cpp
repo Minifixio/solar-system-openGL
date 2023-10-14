@@ -6,6 +6,7 @@ CelestialObject::CelestialObject(float radius, size_t m_resolution, CelestialTyp
     this->radius = radius;
     this->m_resolution = m_resolution;
     this->parent = nullptr;
+    this->center = glm::vec3(0.0);
 }
 
 CelestialObject::CelestialObject(float radius, CelestialObject *parent, float orbitRadius, float orbitPeriod, size_t m_resolution, CelestialType type) {
@@ -15,6 +16,7 @@ CelestialObject::CelestialObject(float radius, CelestialObject *parent, float or
     this->orbitPeriod = orbitPeriod;
     this->orbitRadius = orbitRadius;
     this->m_resolution = m_resolution;
+    this->center = glm::vec3(parent->center.x + orbitRadius, parent->center.y, parent->center.z);
 }
 
 void CelestialObject::init() {
@@ -27,7 +29,7 @@ void CelestialObject::init() {
 }
 
 void CelestialObject::genSphere() {
-    // Effacez les vecteurs existants s'ils contiennent des données
+    // Effacement des vecteurs existants s'ils contiennent des données
     this->m_vertexPositions.clear();
     this->m_vertexNormals.clear();
     this->m_triangleIndices.clear();
@@ -43,15 +45,15 @@ void CelestialObject::genSphere() {
             float y = this->radius * sin(phi) * sin(theta);
             float z = this->radius * cos(phi);
 
-            // Translatez les coordonnées selon le centre
+            // Translation les coordonnées selon le centre
 
 
-            // Ajoutez les coordonnées des sommets
+            // Ajout des coordonnées des sommets
             m_vertexPositions.push_back(x);
             m_vertexPositions.push_back(y);
             m_vertexPositions.push_back(z);
 
-            // Ajoutez les normales (les mêmes que les positions pour une sphère)
+            // Ajout les normales (les mêmes que les positions pour une sphère)
             m_vertexNormals.push_back(x);
             m_vertexNormals.push_back(y);
             m_vertexNormals.push_back(z);
@@ -128,16 +130,16 @@ void CelestialObject::initGPUgeometry() {
   glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
 }
 
-void CelestialObject::updateOrbit(float deltaTime, float radius) {
+void CelestialObject::updateOrbit(float deltaTime, float r) {
     // Mettez à jour l'angle orbital en fonction du temps et de la vitesse orbitale
-    float orbitAngle = 2 * M_PI * (1/this->orbitPeriod) * deltaTime;
+    float orbitAngle = 2 * M_PI * (1 / (this->orbitPeriod * 0.1)) * deltaTime; // * 0.1 for a smaller period
 
     // Calculez les nouvelles coordonnées X et Z en utilisant trigonométrie
-    float newX = radius * glm::cos(orbitAngle);
-    float newY = radius * glm::sin(orbitAngle);
+    float newX = parent->center.x + r * glm::cos(orbitAngle);
+    float newY = parent->center.y + r * glm::sin(orbitAngle);
 
     // Mettez à jour la position de la planète
-    center = glm::vec3(newX, newY, 0.0);
+    center = glm::vec3(newX, newY, parent->center.z);
 }
 
 
@@ -153,7 +155,7 @@ void CelestialObject::render(GLuint program, Camera camera) {
     glUniformMatrix4fv(glGetUniformLocation(program, "projMat"), 1, GL_FALSE, glm::value_ptr(projMatrix));
 
     if (this->type != CelestialType::Star) {
-        float distance = this->orbitRadius + this->parent->getOrbitRadius();
+        float distance = this->orbitRadius;
         this->updateOrbit((float) glfwGetTime(), distance);
 
         model = glm::translate(model, this->center);

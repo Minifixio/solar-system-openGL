@@ -37,10 +37,12 @@ class CelestialObject {
         std::vector<float> m_vertexPositions;
         std::vector<float> m_vertexNormals;
         std::vector<unsigned int> m_triangleIndices;
+        std::vector<float> m_vertexTexCoords;
         GLuint m_vao;
         GLuint m_posVbo;
         GLuint m_normalVbo;
         GLuint m_ibo;
+        GLuint m_texCoordVbo = 0;
         glm::mat4 m_modelMatrix;
 };
 

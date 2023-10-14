@@ -45,6 +45,8 @@ const static float kSizeEarth = 0.5;
 const static float kSizeMoon = 0.25;
 const static float kRadOrbitEarth = 10;
 const static float kRadOrbitMoon = 2;
+const static float kOrbitPeriodEarth = 365;
+const static float kOrbitPeriodMoon = 28;
 
 // Model transformation matrices
 glm::mat4 g_sun, g_earth, g_moon;
@@ -191,7 +193,7 @@ void loadShader(GLuint program, GLenum type, const std::string &shaderFilename) 
   glDeleteShader(shader);
 }
 
-void initGPUprogram() {
+void initGPUprograms() {
   g_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
   loadShader(g_program, GL_VERTEX_SHADER, "shaders/planetVertexShader.glsl");
   loadShader(g_program, GL_FRAGMENT_SHADER, "shaders/planetFragmentShader.glsl");
@@ -204,86 +206,12 @@ void initGPUprogram() {
     // TODO: set shader variables, textures, etc.
 }
 
-// Define your mesh(es) in the CPU memory
-void initCPUgeometry() {
-  // TODO: add vertices and indices for your mesh(es)
-    g_vertexPositions = { // the array of vertex positions [x0, y0, z0, x1, y1, z1, ...]
-            0.f, 0.f, 0.f,
-            1.f, 0.f, 0.f,
-            0.f, 1.f, 0.f
-    };
-    g_triangleIndices = { 0, 1, 2 }; // indices just for one triangle
-    g_vertexColors = { // the array of vertex colors [r0, g0, b0, r1, g1, b1, ...]
-            1.f, 0.f, 0.f,
-            0.f, 1.f, 0.f,
-            0.f, 0.f, 1.f
-    };
-}
-
-void initGPUgeometry() {
-  /*// Create a single handle, vertex array object that contains attributes,
-  // vertex buffer objects (e.g., vertex's position, normal, and color)
-#ifdef _MY_OPENGL_IS_33_
-  glGenVertexArrays(1, &g_vao); // If your system doesn't support OpenGL 4.5, you should use this instead of glCreateVertexArrays.
-#else
-  glCreateVertexArrays(1, &g_vao);
-#endif
-  glBindVertexArray(g_vao);
-
-  // Generate a GPU buffer to store the positions of the vertices
-  size_t vertexBufferSize = sizeof(float)*g_vertexPositions.size(); // Gather the size of the buffer from the CPU-side vector
-#ifdef _MY_OPENGL_IS_33_
-  glGenBuffers(1, &g_posVbo);
-  glBindBuffer(GL_ARRAY_BUFFER, g_posVbo);
-  glBufferData(GL_ARRAY_BUFFER, vertexBufferSize, g_vertexPositions.data(), GL_DYNAMIC_READ);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), 0);
-  glEnableVertexAttribArray(0);
-#else
-  glCreateBuffers(1, &g_posVbo);
-  glBindBuffer(GL_ARRAY_BUFFER, g_posVbo);
-  glNamedBufferStorage(g_posVbo, vertexBufferSize, g_vertexPositions.data(), GL_DYNAMIC_STORAGE_BIT); // Create a data storage on the GPU and fill it from a CPU array
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), 0);
-  glEnableVertexAttribArray(0);
-#endif
-
-  // Same for an index buffer object that stores the list of indices of the
-  // triangles forming the mesh
-  size_t indexBufferSize = sizeof(unsigned int)*g_triangleIndices.size();
-#ifdef _MY_OPENGL_IS_33_
-  glGenBuffers(1, &g_ibo);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ibo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize, g_triangleIndices.data(), GL_DYNAMIC_READ);
-#else
-  glCreateBuffers(1, &g_ibo);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ibo);
-  glNamedBufferStorage(g_ibo, indexBufferSize, g_triangleIndices.data(), GL_DYNAMIC_STORAGE_BIT);
-#endif
-
-  // Adding the color to the triangle
-  size_t vertexColorsBufferSize = sizeof(float)*g_vertexColors.size();
-#ifdef _MY_OPENGL_IS_33_
-  glGenBuffers(1, &g_colorVbo);
-  glBindBuffer(GL_ARRAY_BUFFER, g_colorVbo);
-  glBufferData(GL_ARRAY_BUFFER, vertexColorsBufferSize, g_vertexColors.data(), GL_DYNAMIC_READ);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), 0); // attention: index=1
-  glEnableVertexAttribArray(1); // attention: index=1
-#else
-  glCreateBuffers(1, &g_colorVbo);
-  glBindBuffer(GL_ARRAY_BUFFER, g_colorVbo);
-  glNamedBufferStorage(g_posVbo, vertexColorsBufferSize, g_vertexColors.data(), GL_DYNAMIC_STORAGE_BIT); // Create a data storage on the GPU and fill it from a CPU array
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), 0);
-  glEnableVertexAttribArray(1);
-#endif
-
-  glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering*/
-}
-
 void initCamera() {
   int width, height;
   glfwGetWindowSize(g_window, &width, &height);
   g_camera.setAspectRatio(static_cast<float>(width)/static_cast<float>(height));
 
-  g_camera.setPosition(glm::vec3(0.0, 90.0, 20.0));
+  g_camera.setPosition(glm::vec3(0.0, 10.0, 30.0));
   g_camera.setNear(0.1);
   g_camera.setFar(200.1);
 }
@@ -291,9 +219,7 @@ void initCamera() {
 void init() {
   initGLFW();
   initOpenGL();
-  initCPUgeometry();
-  initGPUprogram();
-  initGPUgeometry();
+  initGPUprograms();
   initCamera();
 
   for (CelestialObject* o : g_celestialObjects) {
@@ -334,11 +260,14 @@ void update(const float currentTimeInSec) {
 
 int main(int argc, char ** argv) {
 
-    CelestialObject* sun = new CelestialObject(10.0, (size_t) 100, CelestialType::Star);
+    CelestialObject* sun = new CelestialObject(kSizeSun, (size_t) 100, CelestialType::Star);
   g_celestialObjects.push_back(sun);
 
-    CelestialObject* planet = new CelestialObject(5.0, sun, 20, 3, (size_t) 100, CelestialType::Planet);
-    g_celestialObjects.push_back(planet);
+    CelestialObject* planet1 = new CelestialObject(kSizeEarth, sun, kRadOrbitEarth, kOrbitPeriodEarth, (size_t) 100, CelestialType::Planet);
+    g_celestialObjects.push_back(planet1);
+
+    CelestialObject* planet2 = new CelestialObject(kSizeMoon, planet1, kRadOrbitMoon, kOrbitPeriodMoon, (size_t) 100, CelestialType::Planet);
+    g_celestialObjects.push_back(planet2);
 
   init(); // Your initialization code (user interface, OpenGL states, scene with geometry, material, lights, etc)
 

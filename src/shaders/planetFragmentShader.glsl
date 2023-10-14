@@ -11,10 +11,10 @@ void main() {
     vec3 objectColor = vec3(1.0f, 0.5f, 0.31f);
     vec3 norm = normalize(fNormal);
 
-    float ambientStrength = 0.2;
+    float ambientStrength = 0.3;
     vec3 ambient = ambientStrength * lightColor;
 
-    float specularStrength = 0.1;
+    float specularStrength = 0.2;
     vec3 lightDir = normalize(lightPos - fPosition);
     vec3 viewDir = normalize(camPos - fPosition);
     vec3 reflectDir = reflect(-lightDir, norm);
