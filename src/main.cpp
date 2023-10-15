@@ -35,10 +35,6 @@
 #include <cmath>
 #include <memory>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#include "Camera.h"
-
 // constants
 const static float kSizeSun = 1;
 const static float kSizeEarth = 0.5;
@@ -75,26 +71,6 @@ std::vector<unsigned int> g_triangleIndices;
 
 // Basic camera model
 Camera g_camera;
-
-GLuint loadTextureFromFileToGPU(const std::string &filename) {
-  int width, height, numComponents;
-  // Loading the image in CPU memory using stb_image
-  unsigned char *data = stbi_load(
-    filename.c_str(),
-    &width, &height,
-    &numComponents, // 1 for a 8 bit grey-scale image, 3 for 24bits RGB image, 4 for 32bits RGBA image
-    0);
-
-  GLuint texID;
-  // TODO: create a texture and upload the image data in GPU memory using
-  // glGenTextures, glBindTexture, glTexParameteri, and glTexImage2D
-
-  // Free useless CPU memory
-  stbi_image_free(data);
-  glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
-
-  return texID;
-}
 
 // Executed each time the window is resized. Adjust the aspect ratio and the rendering viewport to the current window.
 void windowSizeCallback(GLFWwindow* window, int width, int height) {
@@ -211,7 +187,7 @@ void initCamera() {
   glfwGetWindowSize(g_window, &width, &height);
   g_camera.setAspectRatio(static_cast<float>(width)/static_cast<float>(height));
 
-  g_camera.setPosition(glm::vec3(0.0, 10.0, 30.0));
+  g_camera.setPosition(glm::vec3(20.0, 0.0, 0.0));
   g_camera.setNear(0.1);
   g_camera.setFar(200.1);
 }
@@ -219,12 +195,13 @@ void initCamera() {
 void init() {
   initGLFW();
   initOpenGL();
-  initGPUprograms();
   initCamera();
 
   for (CelestialObject* o : g_celestialObjects) {
     o->init();
   }
+
+  initGPUprograms();
 }
 
 void clear() {
@@ -260,14 +237,14 @@ void update(const float currentTimeInSec) {
 
 int main(int argc, char ** argv) {
 
-    CelestialObject* sun = new CelestialObject(kSizeSun, (size_t) 100, CelestialType::Star);
-  g_celestialObjects.push_back(sun);
+    CelestialObject* sun = new CelestialObject(kSizeSun, (size_t) 100, "media/sun-2.jpg", CelestialType::Star);
+    g_celestialObjects.push_back(sun);
 
-    CelestialObject* planet1 = new CelestialObject(kSizeEarth, sun, kRadOrbitEarth, kOrbitPeriodEarth, (size_t) 100, CelestialType::Planet);
-    g_celestialObjects.push_back(planet1);
+    CelestialObject* earth = new CelestialObject(kSizeEarth, sun, kRadOrbitEarth, kOrbitPeriodEarth, (size_t) 100, "media/earth.jpg", CelestialType::Planet);
+    g_celestialObjects.push_back(earth);
 
-    CelestialObject* planet2 = new CelestialObject(kSizeMoon, planet1, kRadOrbitMoon, kOrbitPeriodMoon, (size_t) 100, CelestialType::Planet);
-    g_celestialObjects.push_back(planet2);
+    CelestialObject* moon = new CelestialObject(kSizeMoon, earth, kRadOrbitMoon, kOrbitPeriodMoon, (size_t) 100, "media/moon.jpg", CelestialType::Planet);
+    g_celestialObjects.push_back(moon);
 
   init(); // Your initialization code (user interface, OpenGL states, scene with geometry, material, lights, etc)
 
