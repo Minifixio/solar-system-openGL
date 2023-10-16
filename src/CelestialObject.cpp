@@ -40,7 +40,6 @@ void CelestialObject::genSphere() {
     this->m_vertexPositions.clear();
     this->m_vertexNormals.clear();
     this->m_triangleIndices.clear();
-    int curvert = 0;
 
     // Calcul des sommets de la sphère
     for (size_t i = 0; i <= this->m_resolution; ++i) {
@@ -69,22 +68,6 @@ void CelestialObject::genSphere() {
             float t2 = static_cast<float>(i)/static_cast<float>(m_resolution);
             m_vertexTexCoords.push_back(t1);
             m_vertexTexCoords.push_back(t2);
-
-           /* if (i + 1 == m_resolution || j + 1 == m_resolution) {
-
-            }
-                //add indices (current vert + right + botton right)
-            else {
-                this->m_triangleIndices.push_back(curvert);
-                this->m_triangleIndices.push_back(curvert + m_resolution);
-                this->m_triangleIndices.push_back(curvert + m_resolution + 1);
-                //add indices (current vert + down + botton right)
-                this->m_triangleIndices.push_back(curvert);
-                this->m_triangleIndices.push_back(curvert + m_resolution + 1);
-                this->m_triangleIndices.push_back(curvert + 1);
-            }
-
-            curvert++;*/
         }
     }
 
