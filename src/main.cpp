@@ -23,6 +23,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include "stb_image.h"
 
 #include "CelestialObject.h"
 
@@ -90,6 +91,132 @@ std::vector<unsigned int> g_triangleIndices;
 
 // Basic camera model
 Camera g_camera;
+
+std::vector<std::string> skyboxFaces;
+GLuint s_program = 0;
+GLuint skyboxVbo = 0;
+GLuint skyboxVao = 0;
+unsigned int cubemapTexture;
+
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+            );
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
+
+void initSkyBox() {
+    float skyboxVertices[] = {
+            // positions
+            -1.0f,  1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            -1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            1.0f, -1.0f,  1.0f
+    };
+    glGenVertexArrays(1, &skyboxVao);
+    glGenBuffers(1, &skyboxVbo);
+    glBindVertexArray(skyboxVao);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    skyboxFaces =
+            {
+                    "media/skybox/skybox_right.png",
+                    "media/skybox/skybox_left.png",
+                    "media/skybox/skybox_top.png",
+                    "media/skybox/skybox_bottom.png",
+                    "media/skybox/skybox_front.png",
+                    "media/skybox/skybox_back.png",
+            };
+
+    cubemapTexture = loadCubemap(skyboxFaces);
+    std::cout << "cubemapTexture: " << cubemapTexture << std::endl;
+}
+
+
+void renderSkybox() {
+    glDepthFunc(GL_LEQUAL);
+    glUseProgram(s_program);
+    const glm::mat4 viewMatrix = glm::mat4(glm::mat3(g_camera.computeViewMatrix()));
+    const glm::mat4 projMatrix = g_camera.computeProjectionMatrix();
+    glUniformMatrix4fv(glGetUniformLocation(s_program, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(s_program, "projMat"), 1, GL_FALSE, glm::value_ptr(projMatrix));
+
+    // skybox cube
+    glBindVertexArray(skyboxVao);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+    glDepthFunc(GL_LESS);
+}
 
 // Executed each time the window is resized. Adjust the aspect ratio and the rendering viewport to the current window.
 void windowSizeCallback(GLFWwindow* window, int width, int height) {
@@ -174,6 +301,7 @@ void initOpenGL() {
   glDepthFunc(GL_LESS);   // Specify the depth test for the z-buffer
   glEnable(GL_DEPTH_TEST);      // Enable the z-buffer test in the rasterization
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // specify the background color, used any time the framebuffer is cleared
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 // Loads the content of an ASCII file in a standard C++ string
@@ -212,6 +340,11 @@ void initGPUprograms() {
   loadShader(l_program, GL_VERTEX_SHADER, "shaders/starVertexShader.glsl");
   loadShader(l_program, GL_FRAGMENT_SHADER, "shaders/starFragmentShader.glsl");
   glLinkProgram(l_program); // The main GPU program is ready to be handle streams of polygons
+
+    s_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
+    loadShader(s_program, GL_VERTEX_SHADER, "shaders/skyboxVertexShader.glsl");
+    loadShader(s_program, GL_FRAGMENT_SHADER, "shaders/skyboxFragmentShader.glsl");
+    glLinkProgram(s_program); // The main GPU program is ready to be handle streams of polygons
     // TODO: set shader variables, textures, etc.
 }
 
@@ -235,6 +368,7 @@ void init() {
   }
 
   initGPUprograms();
+  initSkyBox();
 }
 
 void clear() {
@@ -257,6 +391,8 @@ void render() {
           // glUniform3f(glGetUniformLocation(g_program, "objectColor"), 1.0f, 0.5f, 0.31f);
       }
   }
+
+    renderSkybox();
 
   // glBindVertexArray(g_vao);     // activate the VAO storing geometry data
   // glDrawElements(GL_TRIANGLES, g_triangleIndices.size(), GL_UNSIGNED_INT, 0); // Call for rendering: stream the current GPU geometry through the current GPU program
