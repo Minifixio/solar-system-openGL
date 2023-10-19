@@ -5,21 +5,24 @@
 #include "stb_image.h"
 #include "Camera.h"
 
-CelestialObject::CelestialObject(float radius, size_t m_resolution, std::string texPath, CelestialType type) {
+CelestialObject::CelestialObject(float radius, float rotationPeriod, size_t m_resolution, std::string texPath, CelestialType type) {
     this->type = type;
     this->radius = radius;
+    this->rotationPeriod = rotationPeriod;
     this->m_resolution = m_resolution;
     this->parent = nullptr;
     this->texPath = texPath;
     this->center = glm::vec3(0.0);
 }
 
-CelestialObject::CelestialObject(float radius, CelestialObject *parent, float orbitRadius, float orbitPeriod, size_t m_resolution, std::string texPath, CelestialType type) {
+CelestialObject::CelestialObject(float radius, CelestialObject *parent, float orbitRadius, float orbitPeriod, float rotationPeriod, float inclinationAngle, size_t m_resolution, std::string texPath, CelestialType type) {
     this->type = type;
     this->radius = radius;
     this->parent = parent;
     this->orbitPeriod = orbitPeriod;
     this->orbitRadius = orbitRadius;
+    this->rotationPeriod = rotationPeriod;
+    this->inclinationAngle = inclinationAngle;
     this->m_resolution = m_resolution;
     this->texPath = texPath;
     this->center = glm::vec3(parent->center.x  + orbitRadius, parent->center.y , parent->center.z);
@@ -187,6 +190,11 @@ void CelestialObject::updateOrbit(float deltaTime, float r) {
     center = glm::vec3(newX, parent->center.y, newZ);
 }
 
+float CelestialObject::getRotationAngle(float deltaTime) {
+    float rotationAngle = 2.0 * M_PI * deltaTime / rotationPeriod * (1 / 0.1);
+    return rotationAngle;
+}
+
 
 void CelestialObject::render(GLuint program, Camera camera) {
 
@@ -209,15 +217,19 @@ void CelestialObject::render(GLuint program, Camera camera) {
     glUniform1i(glGetUniformLocation(program, "material.albedoTex"), 0);
     // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+    float deltaTime = (float) glfwGetTime();
+
     if (this->type != CelestialType::Star) {
         float distance = this->orbitRadius;
-        this->updateOrbit((float) glfwGetTime(), distance);
+        this->updateOrbit(deltaTime, distance);
 
         model = glm::translate(model, this->center);
-
-        glUniformMatrix4fv(glGetUniformLocation(program, "modelMat"), 1, GL_FALSE, glm::value_ptr(model));
     }
 
+    model = glm::rotate(model, inclinationAngle, glm::vec3(1.0, 0.0, 0.0));
+    model = glm::rotate(model, this->getRotationAngle(deltaTime), glm::vec3(0.0, 1.0, 0.0));
+
+    glUniformMatrix4fv(glGetUniformLocation(program, "modelMat"), 1, GL_FALSE, glm::value_ptr(model));
     glBindVertexArray(m_vao);     // activate the VAO storing geometry data
     glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0); // Call for rendering: stream the current GPU geometry through the current GPU program
 }

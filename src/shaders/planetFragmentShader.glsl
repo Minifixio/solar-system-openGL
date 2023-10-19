@@ -14,27 +14,26 @@ uniform sampler2D ourTexture;
 uniform vec3 camPos;
 
 void main() {
+
     vec3 lightPos = vec3(0.0f, 0.0f, 0.0f);
     vec3 lightColor = vec3(1.0f, 1.0f, 0.7f);
-    vec3 texColor = texture(ourTexture, fTexCoord).rgb;
-    // vec3 objectColor = vec3(1.0f, 0.5f, 0.31f);
-    vec3 norm = normalize(fNormal);
-
-    float ambientStrength = 0.4;
+    vec3 texColor = texture(material.albedoTex, fTexCoord).rgb;
+    float ambientStrength = 0.2;
     vec3 ambient = ambientStrength * lightColor;
 
-    float specularStrength = 0.3;
+    // diffuse
+    vec3 norm = normalize(fNormal);
     vec3 lightDir = normalize(lightPos - fPosition);
-    vec3 viewDir = normalize(camPos - fPosition);
-    vec3 reflectDir = reflect(-lightDir, norm);
-
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = diff * lightColor;
+
+    // specular
+    float specularStrength = 0.8;
+    vec3 viewDir = normalize(camPos - fPosition);
+    vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     vec3 specular = specularStrength * spec * lightColor;
 
-    // vec3 result = (ambient + diffuse + specular) * objectColor;
     vec3 result = (ambient + diffuse + specular) * texColor;
-
     color = vec4(result, 1.0);
 }

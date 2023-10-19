@@ -10,8 +10,8 @@ out vec2 fTexCoord;
 uniform mat4 viewMat, projMat, modelMat;
 
 void main() {
-        fNormal = vNormal;
-        fPosition = vPosition;
+        fNormal = mat3(transpose(inverse(modelMat))) * vNormal;
+        fPosition = vec3(modelMat * vec4(vPosition, 1.0));
         fTexCoord = vTexCoord;
         gl_Position = projMat * viewMat * modelMat * vec4(vPosition, 1.0); // mandatory to rasterize properly
 }

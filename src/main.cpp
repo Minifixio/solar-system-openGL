@@ -39,10 +39,29 @@
 const static float kSizeSun = 1;
 const static float kSizeEarth = 0.5;
 const static float kSizeMoon = 0.25;
+const static float kSizeMars = 0.75;
+const static float kSizeJupiter = 1.5;
+
 const static float kRadOrbitEarth = 10;
 const static float kRadOrbitMoon = 2;
+const static float kRadOrbitMars = 15;
+const static float kRadOrbitJupiter = 20;
+
 const static float kOrbitPeriodEarth = 365;
 const static float kOrbitPeriodMoon = 28;
+const static float kOrbitPeriodMars = 687;
+const static float kOrbitPeriodJupiter = 4332;
+
+const static float kRotationPeriodEarth = 24;
+const static float kRotationPeriodMoon = 27;
+const static float kRotationPeriodSun = 25;
+const static float kRotationPeriodMars = 24;
+const static float kRotationPeriodJupiter = 10;
+
+const static float kInclinationAngleEarth = glm::radians(23.5f);
+const static float kInclinationAngleMoon = glm::radians(5.14f);
+const static float kInclinationAngleMars = glm::radians(25.19f);
+const static float kInclinationAngleJupiter = glm::radians(3.13f);
 
 // Model transformation matrices
 glm::mat4 g_sun, g_earth, g_moon;
@@ -91,6 +110,16 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
   }
 }
 
+void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    g_camera.processMouseScroll(static_cast<float>(yoffset));
+}
+
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+}
+
 void errorCallback(int error, const char *desc) {
   std::cout <<  "Error " << error << ": " << desc << std::endl;
 }
@@ -126,6 +155,10 @@ void initGLFW() {
   glfwMakeContextCurrent(g_window);
   glfwSetWindowSizeCallback(g_window, windowSizeCallback);
   glfwSetKeyCallback(g_window, keyCallback);
+
+  glfwSetCursorPosCallback(g_window, mouseCallback); // For the mouse movement
+  glfwSetMouseButtonCallback(g_window, mouseButtonCallback);
+  glfwSetScrollCallback(g_window, scrollCallback);
 }
 
 void initOpenGL() {
@@ -187,7 +220,7 @@ void initCamera() {
   glfwGetWindowSize(g_window, &width, &height);
   g_camera.setAspectRatio(static_cast<float>(width)/static_cast<float>(height));
 
-  g_camera.setPosition(glm::vec3(20.0, 0.0, 0.0));
+  g_camera.setPosition(glm::vec3(20.0, 50.0, 70.0));
   g_camera.setNear(0.1);
   g_camera.setFar(200.1);
 }
@@ -237,13 +270,19 @@ void update(const float currentTimeInSec) {
 
 int main(int argc, char ** argv) {
 
-    CelestialObject* sun = new CelestialObject(kSizeSun, (size_t) 100, "media/sun-2.jpg", CelestialType::Star);
+    CelestialObject* sun = new CelestialObject(kSizeSun, kRotationPeriodSun, (size_t) 100, "media/sun-2.jpg", CelestialType::Star);
     g_celestialObjects.push_back(sun);
 
-    CelestialObject* earth = new CelestialObject(kSizeEarth, sun, kRadOrbitEarth, kOrbitPeriodEarth, (size_t) 100, "media/earth.jpg", CelestialType::Planet);
+    CelestialObject* mars = new CelestialObject(kSizeMars, sun, kRadOrbitMars, kOrbitPeriodMars, kRotationPeriodMars,  kInclinationAngleMars, (size_t) 100, "media/mars.jpeg", CelestialType::Planet);
+    g_celestialObjects.push_back(mars);
+
+    CelestialObject* jupiter = new CelestialObject(kSizeJupiter, sun, kRadOrbitJupiter, kOrbitPeriodJupiter, kRotationPeriodJupiter,  kInclinationAngleJupiter, (size_t) 100, "media/jupiter.jpg", CelestialType::Planet);
+    g_celestialObjects.push_back(jupiter);
+
+    CelestialObject* earth = new CelestialObject(kSizeEarth, sun, kRadOrbitEarth, kOrbitPeriodEarth, kRotationPeriodEarth,  kInclinationAngleEarth, (size_t) 100, "media/earth.jpg", CelestialType::Planet);
     g_celestialObjects.push_back(earth);
 
-    CelestialObject* moon = new CelestialObject(kSizeMoon, earth, kRadOrbitMoon, kOrbitPeriodMoon, (size_t) 100, "media/moon.jpg", CelestialType::Planet);
+    CelestialObject* moon = new CelestialObject(kSizeMoon, earth, kRadOrbitMoon, kOrbitPeriodMoon, kRotationPeriodMoon, kInclinationAngleMoon, (size_t) 100, "media/moon.jpg", CelestialType::Planet);
     g_celestialObjects.push_back(moon);
 
   init(); // Your initialization code (user interface, OpenGL states, scene with geometry, material, lights, etc)

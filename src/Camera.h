@@ -7,18 +7,30 @@
 
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include "glm/gtx/string_cast.hpp"
+
+enum CameraMovement {FORWARD, BACKWARD, LEFT, RIGHT};
 
 class Camera {
 public:
     inline float getFov() const { return m_fov; }
+
     inline void setFoV(const float f) { m_fov = f; }
+
     inline float getAspectRatio() const { return m_aspectRatio; }
+
     inline void setAspectRatio(const float a) { m_aspectRatio = a; }
+
     inline float getNear() const { return m_near; }
+
     inline void setNear(const float n) { m_near = n; }
+
     inline float getFar() const { return m_far; }
+
     inline void setFar(const float n) { m_far = n; }
+
     inline void setPosition(const glm::vec3 &p) { m_pos = p; }
+
     inline glm::vec3 getPosition() { return m_pos; }
 
     inline glm::mat4 computeViewMatrix() const {
@@ -30,12 +42,23 @@ public:
         return glm::perspective(glm::radians(m_fov), m_aspectRatio, m_near, m_far);
     }
 
+    void processMouseScroll(float yoffset) {
+        m_fov -= (float)yoffset;
+        if (m_fov < 1.0f)
+            m_fov = 1.0f;
+        if (m_fov > 45.0f)
+            m_fov = 45.0f;
+    }
+
+
 private:
     glm::vec3 m_pos = glm::vec3(0, 0, 0);
+
     float m_fov = 45.f;        // Field of view, in degrees
     float m_aspectRatio = 1.f; // Ratio between the width and the height of the image
     float m_near = 0.1f; // Distance before which geometry is excluded from the rasterization process
     float m_far = 10.f; // Distance after which the geometry is excluded from the rasterization process
+    float m_zoom = 45.0f;
 };
 
 

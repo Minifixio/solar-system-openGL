@@ -14,8 +14,8 @@ enum class CelestialType { Planet, Star };
 
 class CelestialObject {
     public:
-        CelestialObject(float radius, CelestialObject *parent, float orbitRadius, float orbitPeriod, size_t m_resolution, std::string texPath, CelestialType type);
-        CelestialObject(float radius, size_t m_resolution, std::string texPath, CelestialType type);
+        CelestialObject(float radius, CelestialObject *parent, float orbitRadius, float orbitPeriod, float rotationPeriod, float inclinationAngle, size_t m_resolution, std::string texPath, CelestialType type);
+        CelestialObject(float radius, float rotationPeriod, size_t m_resolution, std::string texPath, CelestialType type);
         void init(); // should properly set up the geometry buffer
         void render(GLuint program, Camera camera); // should be called in the main rendering loop
         CelestialType getType() { return this->type; }
@@ -26,6 +26,7 @@ class CelestialObject {
         void genSphere();
         GLuint loadTextureFromFileToGPU(const std::string &filename);
         void updateOrbit(float deltaTime, float radius);
+        float getRotationAngle(float deltaTime);
 
     private:
         CelestialType type;
@@ -35,6 +36,8 @@ class CelestialObject {
         float radius;
         float orbitRadius;
         float orbitPeriod;
+        float rotationPeriod;
+        float inclinationAngle;
         glm::vec3 center;
         std::vector<float> m_vertexPositions;
         std::vector<float> m_vertexNormals;
