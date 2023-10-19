@@ -4,7 +4,7 @@ in vec2 fTexCoord;
 out vec4 color;
 
 struct Material {
-    sampler2D albedoTex; // texture unit, relate to glActivateTexture(GL_TEXTURE0 + i)
+    sampler2D albedoTex;
 };
 uniform Material material;
 uniform sampler2D ourTexture;

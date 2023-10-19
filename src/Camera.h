@@ -42,6 +42,7 @@ public:
         return glm::perspective(glm::radians(m_fov), m_aspectRatio, m_near, m_far);
     }
 
+    // In order to adjust the zoom (i.e fov)
     void processMouseScroll(float yoffset) {
         m_fov -= (float)yoffset;
         if (m_fov < 1.0f)
@@ -53,8 +54,7 @@ public:
 
 private:
     glm::vec3 m_pos = glm::vec3(0, 0, 0);
-
-    float m_fov = 45.f;        // Field of view, in degrees
+    float m_fov = 45.f; // Field of view, in degrees
     float m_aspectRatio = 1.f; // Ratio between the width and the height of the image
     float m_near = 0.1f; // Distance before which geometry is excluded from the rasterization process
     float m_far = 10.f; // Distance after which the geometry is excluded from the rasterization process

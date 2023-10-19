@@ -3,7 +3,6 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include "Camera.h"
 
 CelestialObject::CelestialObject(float radius, float rotationPeriod, size_t m_resolution, std::string texPath, CelestialType type) {
     this->type = type;
@@ -39,29 +38,28 @@ void CelestialObject::init() {
 }
 
 void CelestialObject::genSphere() {
-    // Effacement des vecteurs existants s'ils contiennent des données
+    // Clearing existing vectors if they contain data
     this->m_vertexPositions.clear();
     this->m_vertexNormals.clear();
     this->m_triangleIndices.clear();
 
-    // Calcul des sommets de la sphère
+    // Calculation of the vertices of the sphere
     for (size_t i = 0; i <= this->m_resolution; ++i) {
         float phi = glm::pi<float>() * static_cast<float>(i) / static_cast<float>(this->m_resolution); // Angle vertical (0 à pi)
         for (size_t j = 0; j <= this->m_resolution; ++j) {
             float theta = 2 * glm::pi<float>() * static_cast<float>(j) / static_cast<float>(this->m_resolution); // Angle horizontal (0 à 2*pi)
 
-            // Coordonnées sphériques
+            // Spherical coordinates
             float x = this->radius * sin(phi) * cos(theta);
             float z = this->radius * sin(phi) * sin(theta);
             float y = this->radius * cos(phi);
 
-
-            // Ajout des coordonnées des sommets
+            // Add the positions
             m_vertexPositions.push_back(x);
             m_vertexPositions.push_back(y);
             m_vertexPositions.push_back(z);
 
-            // Ajout les normales (les mêmes que les positions pour une sphère)
+            // Add the normals (same as the positions for a sphere)
             m_vertexNormals.push_back(x);
             m_vertexNormals.push_back(y);
             m_vertexNormals.push_back(z);
@@ -74,7 +72,7 @@ void CelestialObject::genSphere() {
         }
     }
 
-    // Calcul des indices pour les triangles
+    // Computation of the indices of the triangles forming the sphere
     for (size_t i = 0; i < m_resolution; ++i) {
         for (size_t j = 0; j < m_resolution; ++j) {
             size_t p1 = i * (m_resolution + 1) + j;
@@ -97,7 +95,7 @@ void CelestialObject::genSphere() {
 
 void CelestialObject::initGPUgeometry() {
  // Create a single handle, vertex array object that contains attributes,
-  // vertex buffer objects (e.g., vertex's position, normal, and color)
+ // vertex buffer objects (e.g., vertex's position, normal, and color)
 #ifdef _MY_OPENGL_IS_33_
   glGenVertexArrays(1, &m_vao); // If your system doesn't support OpenGL 4.5, you should use this instead of glCreateVertexArrays.
 #else
@@ -179,14 +177,14 @@ GLuint CelestialObject::loadTextureFromFileToGPU(const std::string &filename) {
 }
 
 void CelestialObject::updateOrbit(float deltaTime, float r) {
-    // Mise à jour l'angle orbital en fonction du temps et de la vitesse orbitale
+    // Update the orbit angle in function of the time and the orbital speed
     float orbitAngle = 2 * M_PI * (1 / (this->orbitPeriod * 0.1)) * deltaTime; // * 0.1 for a smaller period
 
-    // Calcul des nouvelles coordonnées X et Z en utilisant trigonométrie
+    // Compute the new position of the planet
     float newX = parent->center.x + r * glm::cos(orbitAngle);
     float newZ = parent->center.z + r * glm::sin(orbitAngle);
 
-    // Mise à jour la position de la planète
+    // Update the center of the planet
     center = glm::vec3(newX, parent->center.y, newZ);
 }
 
@@ -203,7 +201,7 @@ void CelestialObject::render(GLuint program, Camera camera) {
     const glm::mat4 projMatrix = camera.computeProjectionMatrix();
     const glm::vec3 camPosition = camera.getPosition();
 
-    glUseProgram(program); // Activate the program to be used for upcoming primitive
+    glUseProgram(program);
 
     glUniformMatrix4fv(glGetUniformLocation(program, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(glGetUniformLocation(program, "projMat"), 1, GL_FALSE, glm::value_ptr(projMatrix));
@@ -230,6 +228,6 @@ void CelestialObject::render(GLuint program, Camera camera) {
     model = glm::rotate(model, this->getRotationAngle(deltaTime), glm::vec3(0.0, 1.0, 0.0));
 
     glUniformMatrix4fv(glGetUniformLocation(program, "modelMat"), 1, GL_FALSE, glm::value_ptr(model));
-    glBindVertexArray(m_vao);     // activate the VAO storing geometry data
+    glBindVertexArray(m_vao);
     glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0); // Call for rendering: stream the current GPU geometry through the current GPU program
 }

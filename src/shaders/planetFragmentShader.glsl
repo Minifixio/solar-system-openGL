@@ -1,13 +1,13 @@
-#version 330 core	     // Minimal GL version support expected from the GPU
+#version 330 core
 
 in vec3 fPosition;
 in vec3 fNormal;
 in vec2 fTexCoord;
 
-out vec4 color;	  // Shader output: the color response attached to this fragment
+out vec4 color;
 
 struct Material {
-    sampler2D albedoTex; // texture unit, relate to glActivateTexture(GL_TEXTURE0 + i)
+    sampler2D albedoTex;
 };
 uniform Material material;
 uniform sampler2D ourTexture;

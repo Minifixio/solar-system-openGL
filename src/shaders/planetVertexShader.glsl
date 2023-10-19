@@ -1,4 +1,4 @@
-#version 330 core            // Minimal GL version support expected from the GPU
+#version 330 core
 
 layout(location=0) in vec3 vPosition;
 layout(location=1) in vec3 vNormal;
@@ -14,5 +14,5 @@ void main() {
         fNormal = mat3(transpose(inverse(modelMat))) * vNormal;
         fPosition = vec3(modelMat * vec4(vPosition, 1.0));
         fTexCoord = vTexCoord;
-        gl_Position = projMat * viewMat * modelMat * vec4(vPosition, 1.0); // mandatory to rasterize properly
+        gl_Position = projMat * viewMat * modelMat * vec4(vPosition, 1.0);
 }

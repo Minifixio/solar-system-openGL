@@ -76,31 +76,26 @@ GLFWwindow *g_window = nullptr;
 // GPU objects
 GLuint g_program = 0; // A GPU program contains at least a vertex shader and a fragment shader
 GLuint l_program = 0; // A GPU program for the light objects
+GLuint s_program = 0; // A GPU program for the skybox
 
 // OpenGL identifiers
 GLuint g_vao = 0;
 GLuint g_posVbo = 0;
 GLuint g_ibo = 0;
 GLuint g_colorVbo = 0;
+GLuint g_skyboxVbo = 0;
+GLuint g_skyboxVao = 0;
 
-// All vertex positions packed in one array [x0, y0, z0, x1, y1, z1, ...]
-std::vector<float> g_vertexPositions;
-std::vector<float> g_vertexColors;
-// All triangle indices packed in one array [v00, v01, v02, v10, v11, v12, ...] with vij the index of j-th vertex of the i-th triangle
-std::vector<unsigned int> g_triangleIndices;
+// Skybox faces
+std::vector<std::string> skyboxFaces;
 
 // Basic camera model
 Camera g_camera;
 
-std::vector<std::string> skyboxFaces;
-GLuint s_program = 0;
-GLuint skyboxVbo = 0;
-GLuint skyboxVao = 0;
 unsigned int cubemapTexture;
 
-unsigned int loadCubemap(std::vector<std::string> faces)
-{
-    unsigned int textureID;
+GLuint loadCubemap(std::vector<std::string> faces) {
+    GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 
@@ -178,10 +173,11 @@ void initSkyBox() {
             -1.0f, -1.0f,  1.0f,
             1.0f, -1.0f,  1.0f
     };
-    glGenVertexArrays(1, &skyboxVao);
-    glGenBuffers(1, &skyboxVbo);
-    glBindVertexArray(skyboxVao);
-    glBindBuffer(GL_ARRAY_BUFFER, skyboxVbo);
+
+    glGenVertexArrays(1, &g_skyboxVao);
+    glGenBuffers(1, &g_skyboxVbo);
+    glBindVertexArray(g_skyboxVao);
+    glBindBuffer(GL_ARRAY_BUFFER, g_skyboxVbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -197,7 +193,6 @@ void initSkyBox() {
             };
 
     cubemapTexture = loadCubemap(skyboxFaces);
-    std::cout << "cubemapTexture: " << cubemapTexture << std::endl;
 }
 
 
@@ -209,8 +204,7 @@ void renderSkybox() {
     glUniformMatrix4fv(glGetUniformLocation(s_program, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(glGetUniformLocation(s_program, "projMat"), 1, GL_FALSE, glm::value_ptr(projMatrix));
 
-    // skybox cube
-    glBindVertexArray(skyboxVao);
+    glBindVertexArray(g_skyboxVao);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
     glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -224,7 +218,6 @@ void windowSizeCallback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, (GLint)width, (GLint)height); // Dimension of the rendering region in the window
 }
 
-// Executed each time a key is entered.
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
   if(action == GLFW_PRESS && key == GLFW_KEY_W) {
       std::cout << "W pressed" << std::endl;
@@ -301,7 +294,7 @@ void initOpenGL() {
   glDepthFunc(GL_LESS);   // Specify the depth test for the z-buffer
   glEnable(GL_DEPTH_TEST);      // Enable the z-buffer test in the rasterization
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // specify the background color, used any time the framebuffer is cleared
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 // Loads the content of an ASCII file in a standard C++ string
@@ -366,9 +359,9 @@ void init() {
   for (CelestialObject* o : g_celestialObjects) {
     o->init();
   }
+  initSkyBox();
 
   initGPUprograms();
-  initSkyBox();
 }
 
 void clear() {
@@ -383,6 +376,8 @@ void clear() {
 void render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Erase the color and z buffers.
 
+  renderSkybox();
+
   for(CelestialObject* o : g_celestialObjects) {
       if (o->getType() == CelestialType::Star) {
           o->render(l_program, g_camera);
@@ -391,17 +386,6 @@ void render() {
           // glUniform3f(glGetUniformLocation(g_program, "objectColor"), 1.0f, 0.5f, 0.31f);
       }
   }
-
-    renderSkybox();
-
-  // glBindVertexArray(g_vao);     // activate the VAO storing geometry data
-  // glDrawElements(GL_TRIANGLES, g_triangleIndices.size(), GL_UNSIGNED_INT, 0); // Call for rendering: stream the current GPU geometry through the current GPU program
-}
-
-// Update any accessible variable based on the current time
-void update(const float currentTimeInSec) {
-  // std::cout << currentTimeInSec << std::endl;
-
 }
 
 int main(int argc, char ** argv) {
@@ -424,7 +408,6 @@ int main(int argc, char ** argv) {
   init(); // Your initialization code (user interface, OpenGL states, scene with geometry, material, lights, etc)
 
   while(!glfwWindowShouldClose(g_window)) {
-    update(static_cast<float>(glfwGetTime()));
     render();
     glfwSwapBuffers(g_window);
     glfwPollEvents();
