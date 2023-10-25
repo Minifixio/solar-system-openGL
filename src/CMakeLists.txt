@@ -26,7 +26,9 @@ add_compile_definitions(_MY_OPENGL_IS_33_)
 project(tpOpenGL)
 
 add_executable(${PROJECT_NAME} main.cpp CelestialObject.cpp CelestialObject.h
-        Camera.h)
+        Camera.h
+        Skybox.cpp
+        Skybox.h)
 
 file(GLOB SOURCES
     *.h

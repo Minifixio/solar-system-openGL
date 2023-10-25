@@ -26,6 +26,7 @@
 #include "stb_image.h"
 
 #include "CelestialObject.h"
+#include "Skybox.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -69,6 +70,13 @@ glm::mat4 g_sun, g_earth, g_moon;
 
 // Meshes array
 std::vector<CelestialObject*> g_celestialObjects;
+
+Skybox* g_skybox;
+
+bool arrowUpPressed = false;
+bool arrowDownPressed = false;
+bool arrowRightPressed = false;
+bool arrowLeftPressed = false;
 
 // Window parameters
 GLFWwindow *g_window = nullptr;
@@ -228,6 +236,47 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
   } else if(action == GLFW_PRESS && (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)) {
       glfwSetWindowShouldClose(window, true); // Closes the application if the escape key is pressed
   }
+
+    if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_UP) {
+            arrowUpPressed = true;
+        } else if (key == GLFW_KEY_DOWN) {
+            arrowDownPressed = true;
+        } else if (key == GLFW_KEY_RIGHT) {
+            arrowRightPressed = true;
+        } else if (key == GLFW_KEY_LEFT) {
+            arrowLeftPressed = true;
+        }
+    } else if (action == GLFW_RELEASE) {
+        if (key == GLFW_KEY_UP) {
+            arrowUpPressed = false;
+        } else if (key == GLFW_KEY_DOWN) {
+            arrowDownPressed = false;
+        } else if (key == GLFW_KEY_RIGHT) {
+            arrowRightPressed = false;
+        } else if (key == GLFW_KEY_LEFT) {
+            arrowLeftPressed = false;
+        }
+    }
+}
+
+void updateCameraRotation() {
+    if (arrowUpPressed) {
+        // Rotation vers le haut autour de l'axe X
+        g_camera.rotateUp(5.0f);
+    }
+    if (arrowDownPressed) {
+        // Rotation vers le bas autour de l'axe X
+        g_camera.rotateDown(5.0f);
+    }
+    if (arrowLeftPressed) {
+        // Rotation vers le bas autour de l'axe X
+        g_camera.rotateLeft(5.0f);
+    }
+    if (arrowRightPressed) {
+        // Rotation vers le bas autour de l'axe X
+        g_camera.rotateRight(5.0f);
+    }
 }
 
 void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
@@ -334,11 +383,11 @@ void initGPUprograms() {
   loadShader(l_program, GL_FRAGMENT_SHADER, "shaders/starFragmentShader.glsl");
   glLinkProgram(l_program); // The main GPU program is ready to be handle streams of polygons
 
-    s_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
-    loadShader(s_program, GL_VERTEX_SHADER, "shaders/skyboxVertexShader.glsl");
-    loadShader(s_program, GL_FRAGMENT_SHADER, "shaders/skyboxFragmentShader.glsl");
-    glLinkProgram(s_program); // The main GPU program is ready to be handle streams of polygons
-    // TODO: set shader variables, textures, etc.
+  s_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
+  loadShader(s_program, GL_VERTEX_SHADER, "shaders/skyboxVertexShader.glsl");
+  loadShader(s_program, GL_FRAGMENT_SHADER, "shaders/skyboxFragmentShader.glsl");
+  glLinkProgram(s_program); // The main GPU program is ready to be handle streams of polygons
+
 }
 
 void initCamera() {
@@ -346,7 +395,7 @@ void initCamera() {
   glfwGetWindowSize(g_window, &width, &height);
   g_camera.setAspectRatio(static_cast<float>(width)/static_cast<float>(height));
 
-  g_camera.setPosition(glm::vec3(20.0, 50.0, 70.0));
+  g_camera.setPosition(glm::vec3(0.0, 50.0, 70.0));
   g_camera.setNear(0.1);
   g_camera.setFar(200.1);
 }
@@ -356,10 +405,12 @@ void init() {
   initOpenGL();
   initCamera();
 
+
   for (CelestialObject* o : g_celestialObjects) {
     o->init();
   }
-  initSkyBox();
+  g_skybox->init();
+  // initSkyBox();
 
   initGPUprograms();
 }
@@ -376,7 +427,8 @@ void clear() {
 void render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Erase the color and z buffers.
 
-  renderSkybox();
+  // renderSkybox();
+  g_skybox->render(s_program, g_camera);
 
   for(CelestialObject* o : g_celestialObjects) {
       if (o->getType() == CelestialType::Star) {
@@ -389,6 +441,8 @@ void render() {
 }
 
 int main(int argc, char ** argv) {
+
+    g_skybox = new Skybox();
 
     CelestialObject* sun = new CelestialObject(kSizeSun, kRotationPeriodSun, (size_t) 100, "media/sun-2.jpg", CelestialType::Star);
     g_celestialObjects.push_back(sun);
@@ -410,6 +464,7 @@ int main(int argc, char ** argv) {
   while(!glfwWindowShouldClose(g_window)) {
     render();
     glfwSwapBuffers(g_window);
+    updateCameraRotation();
     glfwPollEvents();
   }
   clear();

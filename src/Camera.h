@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include "glm/gtx/string_cast.hpp"
+#include <iostream>
+
 
 enum CameraMovement {FORWARD, BACKWARD, LEFT, RIGHT};
 
@@ -47,9 +49,55 @@ public:
         m_fov -= (float)yoffset;
         if (m_fov < 1.0f)
             m_fov = 1.0f;
-        if (m_fov > 45.0f)
-            m_fov = 45.0f;
+        if (m_fov > 80.0f)
+            m_fov = 80.0f;
     }
+
+    // Fonction pour faire pivoter la caméra vers le haut autour de l'axe X
+    void rotateRight(float angleDegrees) {
+        std::cout << "rotateUp" << std::endl;
+        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angleDegrees), glm::vec3(0.0f, 1.0f, 0.0f));
+        m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
+        std::cout << "m_pos: " << glm::to_string(m_pos) << std::endl;
+    }
+
+    void rotateLeft(float angleDegrees) {
+        std::cout << "rotateUp" << std::endl;
+        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-angleDegrees), glm::vec3(0.0f, 1.0f, 0.0f));
+        m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
+        std::cout << "m_pos: " << glm::to_string(m_pos) << std::endl;
+    }
+
+    // Fonction pour faire pivoter la caméra vers le haut autour de l'axe perpendiculaire à la direction de vue
+    void rotateUp(float angleDegrees) {
+        glm::vec3 viewDirection = -glm::normalize(m_pos); // Direction vers laquelle la caméra regarde
+        glm::vec3 right = glm::normalize(glm::cross(viewDirection, glm::vec3(0.0f, 1.0f, 0.0f))); // Vecteur "vers la droite"
+
+        // Limite la rotation à +80 degrés
+        if (m_pos.y < 80.0f) {
+            std::cout << "rotateUp" << std::endl;
+            glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-angleDegrees), right);
+            m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
+            std::cout << "m_pos: " << glm::to_string(m_pos) << std::endl;
+        }
+    }
+
+// Fonction pour faire pivoter la caméra vers le bas autour de l'axe perpendiculaire à la direction de vue
+    void rotateDown(float angleDegrees) {
+        glm::vec3 viewDirection = -glm::normalize(m_pos); // Direction vers laquelle la caméra regarde
+        glm::vec3 right = glm::normalize(glm::cross(viewDirection, glm::vec3(0.0f, 1.0f, 0.0f))); // Vecteur "vers la droite"
+
+        // Limite la rotation à -80 degrés
+        if (m_pos.y > -80.0f) {
+            std::cout << "rotateDown" << std::endl;
+            glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angleDegrees), right);
+            m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
+            std::cout << "m_pos: " << glm::to_string(m_pos) << std::endl;
+        }
+    }
+
+
+
 
 
 private:
