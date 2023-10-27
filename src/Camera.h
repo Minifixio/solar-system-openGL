@@ -53,40 +53,35 @@ public:
             m_fov = 80.0f;
     }
 
-    // Fonction pour faire pivoter la caméra vers le haut autour de l'axe X
     void rotateRight(float angleDegrees) {
-        std::cout << "rotateUp" << std::endl;
         glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angleDegrees), glm::vec3(0.0f, 1.0f, 0.0f));
         m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
     }
 
     void rotateLeft(float angleDegrees) {
-        std::cout << "rotateUp" << std::endl;
         glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-angleDegrees), glm::vec3(0.0f, 1.0f, 0.0f));
         m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
     }
 
-    // Fonction pour faire pivoter la caméra vers le haut autour de l'axe perpendiculaire à la direction de vue
+    // Function to rotate the camera upwards around the axis perpendicular to the viewing direction
     void rotateUp(float angleDegrees) {
         glm::vec3 viewDirection = -glm::normalize(m_pos); // Direction vers laquelle la caméra regarde
         glm::vec3 right = glm::normalize(glm::cross(viewDirection, glm::vec3(0.0f, 1.0f, 0.0f))); // Vecteur "vers la droite"
 
-        // Limite la rotation à +80 degrés
+        // Limits the rotation to +80 degrees
         if (m_pos.y < 80.0f) {
-            std::cout << "rotateUp" << std::endl;
             glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-angleDegrees), right);
             m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
         }
     }
 
-// Fonction pour faire pivoter la caméra vers le bas autour de l'axe perpendiculaire à la direction de vue
+    // Function to rotate the camera downwards around the axis perpendicular to the viewing direction
     void rotateDown(float angleDegrees) {
         glm::vec3 viewDirection = -glm::normalize(m_pos); // Direction vers laquelle la caméra regarde
         glm::vec3 right = glm::normalize(glm::cross(viewDirection, glm::vec3(0.0f, 1.0f, 0.0f))); // Vecteur "vers la droite"
 
-        // Limite la rotation à -80 degrés
+        // Limits the rotation to -80 degrees
         if (m_pos.y > -80.0f) {
-            std::cout << "rotateDown" << std::endl;
             glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angleDegrees), right);
             m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
         }

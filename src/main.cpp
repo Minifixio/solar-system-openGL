@@ -34,7 +34,6 @@
 #include <sstream>
 #include <vector>
 #include <string>
-#include <cmath>
 #include <memory>
 
 // constants
@@ -71,6 +70,7 @@ glm::mat4 g_sun, g_earth, g_moon;
 // Meshes array
 std::vector<CelestialObject*> g_celestialObjects;
 
+// Skybox
 Skybox* g_skybox;
 
 bool arrowUpPressed = false;
@@ -90,135 +90,10 @@ GLuint s_program = 0; // A GPU program for the skybox
 GLuint g_vao = 0;
 GLuint g_posVbo = 0;
 GLuint g_ibo = 0;
-GLuint g_colorVbo = 0;
-GLuint g_skyboxVbo = 0;
-GLuint g_skyboxVao = 0;
-
-// Skybox faces
-std::vector<std::string> skyboxFaces;
 
 // Basic camera model
 Camera g_camera;
 
-unsigned int cubemapTexture;
-
-GLuint loadCubemap(std::vector<std::string> faces) {
-    GLuint textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-    int width, height, nrChannels;
-
-    for (unsigned int i = 0; i < faces.size(); i++)
-    {
-
-        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-
-        if (data)
-        {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
-            );
-            stbi_image_free(data);
-        }
-        else
-        {
-            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
-            stbi_image_free(data);
-        }
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    return textureID;
-}
-
-void initSkyBox() {
-    float skyboxVertices[] = {
-            // positions
-            -1.0f,  1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
-
-            -1.0f, -1.0f,  1.0f,
-            -1.0f, -1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f,  1.0f,
-            -1.0f, -1.0f,  1.0f,
-
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-
-            -1.0f, -1.0f,  1.0f,
-            -1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f, -1.0f,  1.0f,
-            -1.0f, -1.0f,  1.0f,
-
-            -1.0f,  1.0f, -1.0f,
-            1.0f,  1.0f, -1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            -1.0f,  1.0f,  1.0f,
-            -1.0f,  1.0f, -1.0f,
-
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f,  1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f,  1.0f,
-            1.0f, -1.0f,  1.0f
-    };
-
-    glGenVertexArrays(1, &g_skyboxVao);
-    glGenBuffers(1, &g_skyboxVbo);
-    glBindVertexArray(g_skyboxVao);
-    glBindBuffer(GL_ARRAY_BUFFER, g_skyboxVbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-    skyboxFaces =
-            {
-                    "media/skybox/skybox_right.png",
-                    "media/skybox/skybox_left.png",
-                    "media/skybox/skybox_top.png",
-                    "media/skybox/skybox_bottom.png",
-                    "media/skybox/skybox_front.png",
-                    "media/skybox/skybox_back.png",
-            };
-
-    cubemapTexture = loadCubemap(skyboxFaces);
-}
-
-
-void renderSkybox() {
-    glDepthFunc(GL_LEQUAL);
-    glUseProgram(s_program);
-    const glm::mat4 viewMatrix = glm::mat4(glm::mat3(g_camera.computeViewMatrix()));
-    const glm::mat4 projMatrix = g_camera.computeProjectionMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(s_program, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(s_program, "projMat"), 1, GL_FALSE, glm::value_ptr(projMatrix));
-
-    glBindVertexArray(g_skyboxVao);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
-    glDepthFunc(GL_LESS);
-}
 
 // Executed each time the window is resized. Adjust the aspect ratio and the rendering viewport to the current window.
 void windowSizeCallback(GLFWwindow* window, int width, int height) {
@@ -237,27 +112,28 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
       glfwSetWindowShouldClose(window, true); // Closes the application if the escape key is pressed
   }
 
-    if (action == GLFW_PRESS) {
-        if (key == GLFW_KEY_UP) {
-            arrowUpPressed = true;
-        } else if (key == GLFW_KEY_DOWN) {
-            arrowDownPressed = true;
-        } else if (key == GLFW_KEY_RIGHT) {
-            arrowRightPressed = true;
-        } else if (key == GLFW_KEY_LEFT) {
-            arrowLeftPressed = true;
-        }
-    } else if (action == GLFW_RELEASE) {
-        if (key == GLFW_KEY_UP) {
-            arrowUpPressed = false;
-        } else if (key == GLFW_KEY_DOWN) {
-            arrowDownPressed = false;
-        } else if (key == GLFW_KEY_RIGHT) {
-            arrowRightPressed = false;
-        } else if (key == GLFW_KEY_LEFT) {
-            arrowLeftPressed = false;
-        }
+  // Handle camera rotations
+  if (action == GLFW_PRESS) {
+    if (key == GLFW_KEY_UP) {
+        arrowUpPressed = true;
+    } else if (key == GLFW_KEY_DOWN) {
+        arrowDownPressed = true;
+    } else if (key == GLFW_KEY_RIGHT) {
+        arrowRightPressed = true;
+    } else if (key == GLFW_KEY_LEFT) {
+        arrowLeftPressed = true;
     }
+  } else if (action == GLFW_RELEASE) {
+    if (key == GLFW_KEY_UP) {
+        arrowUpPressed = false;
+    } else if (key == GLFW_KEY_DOWN) {
+        arrowDownPressed = false;
+    } else if (key == GLFW_KEY_RIGHT) {
+        arrowRightPressed = false;
+    } else if (key == GLFW_KEY_LEFT) {
+        arrowLeftPressed = false;
+    }
+  }
 }
 
 void updateCameraRotation() {
@@ -279,14 +155,8 @@ void updateCameraRotation() {
     }
 }
 
-void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
-}
-
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
     g_camera.processMouseScroll(static_cast<float>(yoffset));
-}
-
-void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 }
 
 void errorCallback(int error, const char *desc) {
@@ -324,9 +194,6 @@ void initGLFW() {
   glfwMakeContextCurrent(g_window);
   glfwSetWindowSizeCallback(g_window, windowSizeCallback);
   glfwSetKeyCallback(g_window, keyCallback);
-
-  glfwSetCursorPosCallback(g_window, mouseCallback); // For the mouse movement
-  glfwSetMouseButtonCallback(g_window, mouseButtonCallback);
   glfwSetScrollCallback(g_window, scrollCallback);
 }
 
@@ -405,12 +272,10 @@ void init() {
   initOpenGL();
   initCamera();
 
-
   for (CelestialObject* o : g_celestialObjects) {
     o->init();
   }
   g_skybox->init();
-  // initSkyBox();
 
   initGPUprograms();
 }
@@ -427,7 +292,6 @@ void clear() {
 void render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Erase the color and z buffers.
 
-  // renderSkybox();
   g_skybox->render(s_program, g_camera);
 
   for(CelestialObject* o : g_celestialObjects) {
@@ -435,7 +299,6 @@ void render() {
           o->render(l_program, g_camera);
       } else if (o->getType() == CelestialType::Planet) {
           o->render(g_program, g_camera);
-          // glUniform3f(glGetUniformLocation(g_program, "objectColor"), 1.0f, 0.5f, 0.31f);
       }
   }
 }

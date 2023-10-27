@@ -64,7 +64,6 @@ void CelestialObject::genSphere() {
             m_vertexNormals.push_back(y);
             m_vertexNormals.push_back(z);
 
-
             float t1 = static_cast<float>(j)/static_cast<float>(m_resolution);
             float t2 = static_cast<float>(i)/static_cast<float>(m_resolution);
             m_vertexTexCoords.push_back(t1);
@@ -131,6 +130,16 @@ void CelestialObject::initGPUgeometry() {
   glNamedBufferStorage(m_posVbo, vertexBufferSize, m_vertexPositions.data(), GL_DYNAMIC_STORAGE_BIT); // Create a data storage on the GPU and fill it from a CPU array
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), 0);
   glEnableVertexAttribArray(0);
+
+  glCreateBuffers(1, &m_normalVbo);
+  glBindBuffer(GL_ARRAY_BUFFER, m_normalVbo);
+  glNamedBufferStorage(GL_ARRAY_BUFFER, vertexNormalsBufferSize, m_vertexNormals.data(), GL_DYNAMIC_STORAGE_BIT);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), 0);
+
+  glCreateBuffers(1, &m_texCoordVbo);
+  glBindBuffer(GL_ARRAY_BUFFER, m_texCoordVbo);
+  glNamedBufferStorage(GL_ARRAY_BUFFER, vertexTexCoordsBufferSize, m_vertexTexCoords.data(), GL_DYNAMIC_STORAGE_BIT);
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), 0);
 #endif
 
   // Same for an index buffer object that stores the list of indices of the
@@ -209,11 +218,7 @@ void CelestialObject::render(GLuint program, Camera camera) {
 
     glActiveTexture(GL_TEXTURE0); // activate texture unit 0
     glBindTexture(GL_TEXTURE_2D, this->m_texVbo);
-    // glUniform1i(this->m_texVbo, 0);
-    // glUniform1i(glGetUniformLocation(program, "ourTexture"), 0);
-    // glBindTexture(GL_TEXTURE_2D, this->m_texVbo);
     glUniform1i(glGetUniformLocation(program, "material.albedoTex"), 0);
-    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
     float deltaTime = (float) glfwGetTime();
 
