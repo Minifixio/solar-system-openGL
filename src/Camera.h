@@ -58,14 +58,12 @@ public:
         std::cout << "rotateUp" << std::endl;
         glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angleDegrees), glm::vec3(0.0f, 1.0f, 0.0f));
         m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
-        std::cout << "m_pos: " << glm::to_string(m_pos) << std::endl;
     }
 
     void rotateLeft(float angleDegrees) {
         std::cout << "rotateUp" << std::endl;
         glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-angleDegrees), glm::vec3(0.0f, 1.0f, 0.0f));
         m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
-        std::cout << "m_pos: " << glm::to_string(m_pos) << std::endl;
     }
 
     // Fonction pour faire pivoter la caméra vers le haut autour de l'axe perpendiculaire à la direction de vue
@@ -78,7 +76,6 @@ public:
             std::cout << "rotateUp" << std::endl;
             glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-angleDegrees), right);
             m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
-            std::cout << "m_pos: " << glm::to_string(m_pos) << std::endl;
         }
     }
 
@@ -92,7 +89,6 @@ public:
             std::cout << "rotateDown" << std::endl;
             glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angleDegrees), right);
             m_pos = glm::vec3(rotation * glm::vec4(m_pos, 1.0f));
-            std::cout << "m_pos: " << glm::to_string(m_pos) << std::endl;
         }
     }
 

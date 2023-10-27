@@ -263,19 +263,19 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 void updateCameraRotation() {
     if (arrowUpPressed) {
         // Rotation vers le haut autour de l'axe X
-        g_camera.rotateUp(5.0f);
+        g_camera.rotateUp(1.0f);
     }
     if (arrowDownPressed) {
         // Rotation vers le bas autour de l'axe X
-        g_camera.rotateDown(5.0f);
+        g_camera.rotateDown(1.0f);
     }
     if (arrowLeftPressed) {
         // Rotation vers le bas autour de l'axe X
-        g_camera.rotateLeft(5.0f);
+        g_camera.rotateLeft(1.0f);
     }
     if (arrowRightPressed) {
         // Rotation vers le bas autour de l'axe X
-        g_camera.rotateRight(5.0f);
+        g_camera.rotateRight(1.0f);
     }
 }
 
