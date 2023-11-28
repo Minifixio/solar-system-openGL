@@ -1,7 +1,8 @@
-# IGR200 - Interactive 3D Application Development
-## Solar System Project Report - Emile LE GALLIC
+# Solar System in OpenGL
 
 This project focuses on creating an interactive 3D solar system using C++ and OpenGL. Below is a detailed overview of the development process and key features implemented.
+
+It was created during the 3D class under the instruction of Dr. Kiwon Um at Telecom Paris. I would like to express my appreciation to Dr. Um for his guidance during the course and for sharing valuable file templates.
 
 ### 1. The First Spheres
 
